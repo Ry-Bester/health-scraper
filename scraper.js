@@ -70,7 +70,7 @@ function scrape(urls, conUrls) {
             rp(domain + urls.pop()).then(function (html) {
 
 
-                let congUrl = "";
+                let conUrl = "";
                 var $ = cheerio.load(html);
                 $(".fusion-text-4 a", html).each(function () {
 
