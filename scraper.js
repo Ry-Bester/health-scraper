@@ -24,6 +24,9 @@ const sleep = (milliseconds) => {
 
 const urls = [
     "/medical-conditions/acne/",
+    "/medical-conditions/attention-deficit-hyperactivity-disorder-adhdadd/",
+    "/medical-conditions/adrenal-fatigue/",
+    "/medical-conditions/allergies/",
 ]
 
 urls.reverse(); //reverse array order because we are using the pop method
@@ -43,6 +46,7 @@ function scrape(urls) {
               const h1 = $(".main-flex h2").text();
               const subhead = $(".main-flex h3").text();
               const content = $(".fusion-column-wrapper").html();
+              const newPageUrl = h1.replace(/\s+/g, '-').toLowerCase();
               // const img1 = $(".fusion-imageframe").html();
 
               // console.log(content);
@@ -61,19 +65,19 @@ function scrape(urls) {
               // });
 
 
-              WritePage(seotitle, seodesc, subhead, h1, content);
+              WritePage(seotitle, seodesc, subhead, h1, content, newPageUrl);
               scrape(urls);
             })
         }
-        else {
-            WritePage(seotitle, seodesc, subhead, h1, content);
-            console.log("we did it - we're heroes");
-        }
+        // else {
+        //     WritePage(seotitle, seodesc, subhead, h1, content);
+        //     console.log("we did it - we're heroes");
+        // }
     });
 
 }
 
-function WritePage(seotitle, seodesc, subhead, h1, content) {
+function WritePage(seotitle, seodesc, subhead, h1, content, newPageUrl) {
     let phpfile = `
 <?php
   $seotitle = "${seotitle}";
@@ -122,8 +126,8 @@ function WritePage(seotitle, seodesc, subhead, h1, content) {
 </script>
   
   `;
-    shell.mkdir('-p', __dirname);
-    const wstream = fs.createWriteStream(__dirname + "/medical-conditions/" + 'index.php');
+    shell.mkdir('-p', __dirname + "/medical-conditions/" + newPageUrl);
+    const wstream = fs.createWriteStream(__dirname + "/medical-conditions/" + newPageUrl + "/" + 'index.php');
     wstream.write(phpfile);
     wstream.end();
 }
