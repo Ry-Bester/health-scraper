@@ -6,8 +6,10 @@ var shell = require('shelljs');
 var path = require('path');
 var getDirName = require('path').dirname;
 var mkdirp = require('mkdirp');
+const { constants } = require('buffer');
 
 const download = function (uri, filename, callback) {
+  console.log("Made it here 2");
     request.head(encodeURI(uri), function (err, res, body) {
         mkdirp(getDirName(filename), function (err) {
             if (err) return cb(err);
@@ -22,41 +24,7 @@ const sleep = (milliseconds) => {
 
 const urls = [
     "/medical-conditions/acne/",
-    // "medical-conditions/attention-deficit-hyperactivity-disorder-adhdadd/",
-    // "medical-conditions/adrenal-fatigue/",
-    // "medical-conditions/allergies/",
-    // "medical-conditions/anxiety-and-depression/",
-    // "medical-conditions/asthma/",
-    // "medical-conditions/autoimmune-disorders/",
-    // "medical-conditions/brain-fog/",
-    // "medical-conditions/cancer/",
-    // "medical-conditions/cardiovascular-disease/",
-    // "medical-conditions/chronic-bacterial-vaginosis/",
-    // "medical-conditions/chronic-fatigue-syndrome/",
-    // "medical-conditions/chronic-joint-pain/",
-    // "medical-conditions/chronic-uti/",
-    // "medical-conditions/chronic-yeast-infections/",
-    // "medical-conditions/dermatitis/",
-    // "medical-conditions/digestive-disorders/",
-    // "medical-conditions/fibromyalgia/",
-    // "medical-conditions/hair-loss/",
-    // "medical-conditions/heavy-metal-toxicity/",
-    // "medical-conditions/hypothyroidism/",
-    // "medical-conditions/infertility/",
-    // "medical-conditions/insomnia/",
-    // "medical-conditions/interstitial-cystitis/",
-    // "medical-conditions/irregular-periods-menses/",
-    // "medical-conditions/leaky-gut-syndrome/",
-    // "medical-conditions/memory-problems/",
-    // "medical-conditions/migraine-headaches/",
-    // "medical-conditions/osteoporosis/",
-    // "medical-conditions/overweight/",
-    // "medical-conditions/parkinsons-disease/",
-    // "medical-conditions/pms/",
-    // "medical-conditions/rheumatoid-arthritis/",
 ]
-
-
 
 urls.reverse(); //reverse array order because we are using the pop method
 
@@ -64,99 +32,98 @@ const domain = "https://healthandvitalitycenter.com";
 
 scrape(urls, "", []);
 
-function scrape(urls, conUrls) {
+function scrape(urls) {
     sleep(1000).then(() => { //set limiter time here
         if (urls.length > 0) {
             rp(domain + urls.pop()).then(function (html) {
+              var $ = cheerio.load(html);
+
+              const seotitle = $("title").text();
+              const seodesc = $("meta[name='description']").attr("content");
+              const h1 = $(".main-flex h2").text();
+              const subhead = $(".main-flex h3").text();
+              const content = $(".fusion-column-wrapper").html();
+              // const img1 = $(".fusion-imageframe").html();
+
+              // console.log(content);
 
 
-                let congUrl = "";
-                var $ = cheerio.load(html);
-                $(".fusion-text-4 a", html).each(function () {
-
-                    conUrl = $(this).attr("href");
-                    conUrls.push(conUrl);
-
-                });
-
-
-
-                /* SET  CONTENT ITEMS HERE */
-                const title = $("title", html).text();
-                const seodesc = $("meta[name='description']", html).attr("content");
-
-                const h1 = $("h1 .title", html).text(); //change based on the title of thpost on the page
-                let content = $(".post-content", html).html(); //set based on the contenfor thhtml on the page
-
-                /* DOWNLOAD ALL IMAGES */
-                $img = $.load(content);
-                $img("img").each(function () {
-                    const img = $img(this).attr("src"); //change whether lazy loaded or not
-                    const newImgUrl = "/assets/img/condition/" + path.basename(img).trim();
-                    const newImgPath = __dirname + newImgUrl;
-                    download(img, newImgPath, function () { });
-                    $img(this).attr("data-src", newImgUrl);
-                });
+              // /* DOWNLOAD ALL IMAGES */
+              // $img = $.load(img1);
+              // $img("img").each(function () {
+              //     const img = $img(this).attr("src"); //change whether lazy loaded or not
+              //     const newImgUrl = "/assets/img/condition/" + path.basename(img).trim();
+              //     console.log(newImgUrl);
+              //     const newImgPath = __dirname + newImgUrl;
+              //     console.log(newImgPath);
+              //     download(img, newImgPath, function () { });
+              //     $img(this).attr("data-src", newImgUrl);
+              // });
 
 
-                // content = content.replace("data-src","src"); //do this if the images are lazy loaded
-
-                WritePage(title, seodesc, h1, $img.html(),);
-                scrape(urls, conUrls);
+              WritePage(seotitle, seodesc, subhead, h1, content);
+              scrape(urls);
             })
         }
         else {
-            WritePage("Conditions", "", "Conditions", "/condition/");
+            WritePage(seotitle, seodesc, subhead, h1, content);
             console.log("we did it - we're heroes");
         }
     });
 
 }
 
-
-function WritePage(title, seodesc, h1, content,) {
+function WritePage(seotitle, seodesc, subhead, h1, content) {
     let phpfile = `
-  <?php
-  $seotitle = "${title}";
+<?php
+  $seotitle = "${seotitle}";
   $seodesc = "${seodesc}";
-  $section =;
-  ?>
+  $section = "conditions";
+  $pagename = "";
+?>
 
-  <?php include $_SERVER['DOCUMENT_ROOT'] . "/assets/inc/header.php" ?>
+<?php include $_SERVER['DOCUMENT_ROOT'] . "/assets/inc/header.php" ?>
 
-  <section class="masthead bg-image animate zoomOutBg" style="--bgImage: url(/assets/img/masthead/home.jpg);">
-    <div class="container pv50">
-      <div class="pv200">
-        <h1 class="title-xl text-center mb10 white animate fadeIn">${h1}</h1>
-      </div>
+<section class="masthead mb100 bg-image animate zoomOutBg box-shadow-smooth bg-top" style="--bgImage: url(/assets/img/masthead/26.jpg);">
+  <div class="container">
+    <div class="container mb100">
+      <h1 class="white title-xl animate fadeIn">${h1}
+        <div class="animate fadeIn white mt25 title-sm hr-vert">in Los Angeles, CA</div>
+      </h1>
     </div>
-  </section>
+  </div>
+</section>
 
-
-  <section class="mv100">
-    <div class="container">
-      <?php include $_SERVER['DOCUMENT_ROOT'] . "/assets/inc/logos.php" ?>
+<section class="mb100">
+  <div class="container">
+    <div class="mw1000">
+      <h2 class="animate fadeIn title-lg text-center highlight-color">${subhead}</h2>      
     </div>
-  </section>
+  </div>
+</section>
 
-  <section class="mv100">
-    <div class="container">
-      <div class="mw1200">
-        ${content}
-        <div class=""mw800">
-          
+<section class="mb100">
+  <div class="container">
+    <div class="mw1200 animate fadeIn">
+    ${content}
+      <div class="container mt100">
+        <div class="mw800">
+          <img src="/assets/img/conditions/health-and-vitality-center-acne-2.jpg" class="box-shadow-smooth" alt="">
         </div>
       </div>
     </div>
-  </section>
+  </div>
+</section>
 
-  <?php include $_SERVER['DOCUMENT_ROOT'] . "/assets/inc/request-consult.php" ?>
-  <?php include $_SERVER['DOCUMENT_ROOT'] . "/assets/inc/footer.php" ?>
+<?php include $_SERVER['DOCUMENT_ROOT'] . "/assets/inc/request-consult.php" ?>
+<?php include $_SERVER['DOCUMENT_ROOT'] . "/assets/inc/footer.php" ?>
 
-  <script>
-  </script>`;
+<script>
+</script>
+  
+  `;
     shell.mkdir('-p', __dirname);
-    const wstream = fs.createWriteStream(__dirname + + '/index.php');
+    const wstream = fs.createWriteStream(__dirname + "/medical-conditions/" + 'index.php');
     wstream.write(phpfile);
     wstream.end();
 }
