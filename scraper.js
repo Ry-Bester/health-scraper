@@ -10,23 +10,52 @@ const { constants } = require('buffer');
 
 const download = function (uri, filename, callback) {
   console.log("Made it here 2");
-    request.head(encodeURI(uri), function (err, res, body) {
-        mkdirp(getDirName(filename), function (err) {
-            if (err) return cb(err);
-            request(encodeURI(uri)).pipe(fs.createWriteStream(filename)).on('close', callback);
-        });
+  request.head(encodeURI(uri), function (err, res, body) {
+    mkdirp(getDirName(filename), function (err) {
+      if (err) return cb(err);
+      request(encodeURI(uri)).pipe(fs.createWriteStream(filename)).on('close', callback);
     });
+  });
 };
 
 const sleep = (milliseconds) => {
-    return new Promise(resolve => setTimeout(resolve, milliseconds))
+  return new Promise(resolve => setTimeout(resolve, milliseconds))
 }
 
 const urls = [
-    "/medical-conditions/acne/",
-    "/medical-conditions/attention-deficit-hyperactivity-disorder-adhdadd/",
-    "/medical-conditions/adrenal-fatigue/",
-    "/medical-conditions/allergies/",
+  "/medical-conditions/acne/",
+  "/medical-conditions/attention-deficit-hyperactivity-disorder-adhdadd/",
+  "/medical-conditions/adrenal-fatigue/",
+  "/medical-conditions/allergies/",
+  "/medical-conditions/anxiety-and-depression/",
+  "/medical-conditions/asthma/",
+  "/medical-conditions/autoimmune-disorders/",
+  "/medical-conditions/brain-fog/",
+  "/medical-conditions/cancer/",
+  "/medical-conditions/cardiovascular-disease/",
+  "/medical-conditions/chronic-bacterial-vaginosis/",
+  "/medical-conditions/chronic-fatigue-syndrome/",
+  "/medical-conditions/chronic-joint-pain/",
+  "/medical-conditions/chronic-uti/",
+  "/medical-conditions/chronic-yeast-infections/",
+  "/medical-conditions/dermatitis/",
+  "/medical-conditions/digestive-disorders/",
+  "/medical-conditions/fibromyalgia/",
+  "/medical-conditions/hair-loss/",
+  "/medical-conditions/heavy-metal-toxicity/",
+  "/medical-conditions/hypothyroidism/",
+  "/medical-conditions/infertility/",
+  "/medical-conditions/insomnia/",
+  "/medical-conditions/interstitial-cystitis/",
+  "/medical-conditions/irregular-periods-menses/",
+  "/medical-conditions/leaky-gut-syndrome/",
+  "/medical-conditions/memory-problems/",
+  "/medical-conditions/migraine-headaches/",
+  "/medical-conditions/osteoporosis/",
+  "/medical-conditions/overweight/",
+  "/medical-conditions/parkinsons-disease/",
+  "/medical-conditions/pms/",
+  "/medical-conditions/rheumatoid-arthritis/",
 ]
 
 urls.reverse(); //reverse array order because we are using the pop method
@@ -36,49 +65,49 @@ const domain = "https://healthandvitalitycenter.com";
 scrape(urls, "", []);
 
 function scrape(urls) {
-    sleep(1000).then(() => { //set limiter time here
-        if (urls.length > 0) {
-            rp(domain + urls.pop()).then(function (html) {
-              var $ = cheerio.load(html);
+  sleep(1000).then(() => { //set limiter time here
+    if (urls.length > 0) {
+      rp(domain + urls.pop()).then(function (html) {
+        var $ = cheerio.load(html);
 
-              const seotitle = $("title").text();
-              const seodesc = $("meta[name='description']").attr("content");
-              const h1 = $(".main-flex h2").text();
-              const subhead = $(".main-flex h3").text();
-              const content = $(".fusion-column-wrapper").html();
-              const newPageUrl = h1.replace(/\s+/g, '-').toLowerCase();
-              // const img1 = $(".fusion-imageframe").html();
+        const seotitle = $("title").text();
+        const seodesc = $("meta[name='description']").attr("content");
+        const h1 = $(".main-flex h2").text();
+        const subhead = $(".main-flex h3").text();
+        const content = $(".fusion-column-wrapper").html();
+        const newPageUrl = h1.replace(/\s+/g, '-').toLowerCase();
+        // const img1 = $(".fusion-imageframe").html();
 
-              // console.log(content);
-
-
-              // /* DOWNLOAD ALL IMAGES */
-              // $img = $.load(img1);
-              // $img("img").each(function () {
-              //     const img = $img(this).attr("src"); //change whether lazy loaded or not
-              //     const newImgUrl = "/assets/img/condition/" + path.basename(img).trim();
-              //     console.log(newImgUrl);
-              //     const newImgPath = __dirname + newImgUrl;
-              //     console.log(newImgPath);
-              //     download(img, newImgPath, function () { });
-              //     $img(this).attr("data-src", newImgUrl);
-              // });
+        // console.log(content);
 
 
-              WritePage(seotitle, seodesc, subhead, h1, content, newPageUrl);
-              scrape(urls);
-            })
-        }
-        // else {
-        //     WritePage(seotitle, seodesc, subhead, h1, content);
-        //     console.log("we did it - we're heroes");
-        // }
-    });
+        // /* DOWNLOAD ALL IMAGES */
+        // $img = $.load(img1);
+        // $img("img").each(function () {
+        //     const img = $img(this).attr("src"); //change whether lazy loaded or not
+        //     const newImgUrl = "/assets/img/condition/" + path.basename(img).trim();
+        //     console.log(newImgUrl);
+        //     const newImgPath = __dirname + newImgUrl;
+        //     console.log(newImgPath);
+        //     download(img, newImgPath, function () { });
+        //     $img(this).attr("data-src", newImgUrl);
+        // });
+
+
+        WritePage(seotitle, seodesc, subhead, h1, content, newPageUrl);
+        scrape(urls);
+      })
+    }
+    // else {
+    //     WritePage(seotitle, seodesc, subhead, h1, content);
+    //     console.log("we did it - we're heroes");
+    // }
+  });
 
 }
 
 function WritePage(seotitle, seodesc, subhead, h1, content, newPageUrl) {
-    let phpfile = `
+  let phpfile = `
 <?php
   $seotitle = "${seotitle}";
   $seodesc = "${seodesc}";
@@ -126,8 +155,8 @@ function WritePage(seotitle, seodesc, subhead, h1, content, newPageUrl) {
 </script>
   
   `;
-    shell.mkdir('-p', __dirname + "/medical-conditions/" + newPageUrl);
-    const wstream = fs.createWriteStream(__dirname + "/medical-conditions/" + newPageUrl + "/" + 'index.php');
-    wstream.write(phpfile);
-    wstream.end();
+  shell.mkdir('-p', __dirname + "/medical-conditions/" + newPageUrl);
+  const wstream = fs.createWriteStream(__dirname + "/medical-conditions/" + newPageUrl + "/" + 'index.php');
+  wstream.write(phpfile);
+  wstream.end();
 }
